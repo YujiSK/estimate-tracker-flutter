@@ -12,6 +12,8 @@ class EstimateFormPage extends StatefulWidget {
 class EstimateFormPageState extends State<EstimateFormPage> {
   List<Estimate> estimates = [];
   List<Estimate> filteredEstimates = [];
+  
+  bool showDeleted = false; // falseなら通常モード、trueなら削除済み一覧
 
   final _supplierController = TextEditingController();
   final _itemController = TextEditingController();
@@ -73,12 +75,11 @@ class EstimateFormPageState extends State<EstimateFormPage> {
   void _filterEstimates() {
     final query = _searchController.text.toLowerCase();
     setState(() {
-      filteredEstimates =
-          estimates.where((e) {
-            return !e.isDeleted &&
-                (e.supplier.toLowerCase().contains(query) ||
-                    e.item.toLowerCase().contains(query));
-          }).toList();
+      filteredEstimates = estimates.where((e) {
+        final match = e.supplier.toLowerCase().contains(query) ||
+                      e.item.toLowerCase().contains(query);
+        return (showDeleted ? e.isDeleted : !e.isDeleted) && match;
+      }).toList();
       _sortEstimates();
     });
   }
@@ -96,7 +97,21 @@ class EstimateFormPageState extends State<EstimateFormPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Estimate Tracker')),
+      appBar: AppBar(
+        title: Text(showDeleted ? '削除済み一覧' : 'Estimate Tracker'),
+        actions: [
+          IconButton(
+            icon: Icon(showDeleted ? Icons.list : Icons.delete),
+            tooltip: showDeleted ? '通常一覧へ戻る' : '削除済み一覧を見る',
+            onPressed: () {
+              setState(() {
+                showDeleted = !showDeleted;
+                _loadEstimates();
+              });
+            },
+          ),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -201,12 +216,67 @@ class EstimateFormPageState extends State<EstimateFormPage> {
                       child: ListTile(
                         title: Text('${est.supplier} - ${est.item}'),
                         subtitle: Text('¥${est.price} | Delivery: ${est.deliveryDate}'),
+                        trailing: showDeleted
+                            ? IconButton(
+                                icon: Icon(Icons.restore),
+                                tooltip: '復元',
+                                onPressed: () {
+                                  est.isDeleted = false;
+                                  est.save();
+                                  _loadEstimates();
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('見積を復元しました')),
+                                  );
+                                },
+                              )
+                            : null,
                       ),
                     ),
                   );
                 },
               ),
             ),
+            if (showDeleted)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (_) => AlertDialog(
+                        title: Text('本当に削除しますか？'),
+                        content: Text('削除済みの見積をすべて完全に削除します。復元はできません。'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: Text('キャンセル'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, true),
+                            child: Text('削除する'),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirm == true) {
+                      final toDelete = estimateBox.values.where((e) => e.isDeleted).toList();
+                      for (final est in toDelete) {
+                        await est.delete();
+                      }
+                      _loadEstimates();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('削除済み見積をすべて削除しました')),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    backgroundColor: Colors.red,
+                  ),
+                  icon: Icon(Icons.delete_forever),
+                  label: Text('削除済みをすべて完全削除'),
+                ),
+              ),
           ],
         ),
       ),

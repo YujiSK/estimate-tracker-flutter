@@ -21,13 +21,14 @@ class EstimateAdapter extends TypeAdapter<Estimate> {
       item: fields[1] as String,
       price: fields[2] as int,
       deliveryDate: fields[3] as String,
+      isDeleted: fields[4] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, Estimate obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(5)
       ..writeByte(0)
       ..write(obj.supplier)
       ..writeByte(1)
@@ -35,7 +36,9 @@ class EstimateAdapter extends TypeAdapter<Estimate> {
       ..writeByte(2)
       ..write(obj.price)
       ..writeByte(3)
-      ..write(obj.deliveryDate);
+      ..write(obj.deliveryDate)
+      ..writeByte(4)
+      ..write(obj.isDeleted);
   }
 
   @override

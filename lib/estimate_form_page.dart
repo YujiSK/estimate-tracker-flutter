@@ -62,7 +62,9 @@ class EstimateFormPageState extends State<EstimateFormPage> {
     if (_sortBy == 'Price') {
       filteredEstimates.sort((a, b) => a.price.compareTo(b.price));
     } else if (_sortBy == 'Date') {
-      filteredEstimates.sort((a, b) => a.deliveryDate.compareTo(b.deliveryDate));
+      filteredEstimates.sort(
+        (a, b) => a.deliveryDate.compareTo(b.deliveryDate),
+      );
     } else if (_sortBy == 'Supplier') {
       filteredEstimates.sort((a, b) => a.supplier.compareTo(b.supplier));
     }
@@ -71,10 +73,12 @@ class EstimateFormPageState extends State<EstimateFormPage> {
   void _filterEstimates() {
     final query = _searchController.text.toLowerCase();
     setState(() {
-      filteredEstimates = estimates.where((e) {
-        return e.supplier.toLowerCase().contains(query) ||
-               e.item.toLowerCase().contains(query);
-      }).toList();
+      filteredEstimates =
+          estimates.where((e) {
+            return !e.isDeleted &&
+                (e.supplier.toLowerCase().contains(query) ||
+                    e.item.toLowerCase().contains(query));
+          }).toList();
       _sortEstimates();
     });
   }
@@ -125,10 +129,15 @@ class EstimateFormPageState extends State<EstimateFormPage> {
                 Text('Sort by: '),
                 DropdownButton<String>(
                   value: _sortBy,
-                  items: ['None', 'Price', 'Date', 'Supplier']
-                      .map<DropdownMenuItem<String>>((value) => DropdownMenuItem<String>(
-                          value: value, child: Text(value)))
-                      .toList(),
+                  items:
+                      ['None', 'Price', 'Date', 'Supplier']
+                          .map<DropdownMenuItem<String>>(
+                            (value) => DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            ),
+                          )
+                          .toList(),
                   onChanged: (String? value) {
                     setState(() {
                       _sortBy = value!;
@@ -150,10 +159,49 @@ class EstimateFormPageState extends State<EstimateFormPage> {
                 itemCount: filteredEstimates.length,
                 itemBuilder: (context, index) {
                   final est = filteredEstimates[index];
-                  return Card(
-                    child: ListTile(
-                      title: Text('${est.supplier} - ${est.item}'),
-                      subtitle: Text('¥${est.price} | Delivery: ${est.deliveryDate}'),
+                  return Dismissible(
+                    key: Key(est.key.toString()),
+                    direction: DismissDirection.endToStart,
+                    background: Container(
+                      color: Colors.red,
+                      alignment: Alignment.centerRight,
+                      padding: EdgeInsets.only(right: 16.0),
+                      child: Icon(Icons.delete, color: Colors.white),
+                    ),
+                    confirmDismiss: (direction) async {
+                      return await showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: Text('削除の確認'),
+                            content: Text('この見積を削除しますか？'),
+                            actions: <Widget>[
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(false),
+                                child: Text('キャンセル'),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(true),
+                                child: Text('削除する'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                    onDismissed: (direction) {
+                      est.isDeleted = true;
+                      est.save(); // Hiveに反映
+                      _loadEstimates(); // 表示更新
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('見積を削除しました')),
+                      );
+                    },
+                    child: Card(
+                      child: ListTile(
+                        title: Text('${est.supplier} - ${est.item}'),
+                        subtitle: Text('¥${est.price} | Delivery: ${est.deliveryDate}'),
+                      ),
                     ),
                   );
                 },

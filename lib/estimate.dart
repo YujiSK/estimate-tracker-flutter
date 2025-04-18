@@ -16,10 +16,14 @@ class Estimate extends HiveObject {
   @HiveField(3)
   String deliveryDate;
 
+  @HiveField(4)
+  bool isDeleted;
+
   Estimate({
     required this.supplier,
     required this.item,
     required this.price,
     required this.deliveryDate,
+    this.isDeleted = false,
   });
 }

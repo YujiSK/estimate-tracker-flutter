@@ -91,20 +91,33 @@ You may use it for educational or personal use.
 
 ## 🇯🇵 日本語版
 
-### 概要
+# 📊 Estimate Tracker (Flutter + Hive)
 
-Estimate Tracker は、Flutter と Hive を使用して開発された、サプライヤーからの見積情報を管理する軽量なアプリケーションです。
+見積情報（サプライヤー・品目・価格・納期）をローカルで管理できる、Flutter製の軽量アプリケーションです。
 
-### 主な機能
+## 🚀 機能一覧
+- ✅ サプライヤー・品目・単価・納期の登録
+- ✅ 登録済データの一覧表示・ソート
+- ✅ キーワード検索
+- ✅ Hiveによるローカル永続化（オフライン対応）
+- ✅ Android/iOS/Windows/macOS対応
 
-- 📝 見積の登録（会社名・品目・価格・納期）
-- 📋 見積一覧の表示（リアルタイム反映）
-- 🔍 サプライヤー名・品目名での検索機能
-- ↕️ 価格・納期・会社名による並び替え
-- 💾 Hive によるローカル永続保存
-- 💡 シンプルで直感的なUI
+## 🧠 技術スタック
+- Flutter 3.x
+- Hive（ローカルNoSQL DB）
+- build_runner + TypeAdapter（Hive自動生成）
+- State管理：`setState`ベースの簡潔な構成
 
-### 起動方法（基本手順）
+## 📁 ファイル構成（`lib/`）
+
+| ファイル名 | 説明 |
+|------------|------|
+| `main.dart` | アプリ起動、Hive初期化処理 |
+| `estimate.dart` | Hive対応の見積モデル |
+| `estimate_form_page.dart` | 登録フォーム＋リストUI |
+| `estimate.g.dart` | 自動生成されたHiveアダプタコード（build_runner） |
+
+## 🔧 セットアップ手順
 
 ```bash
 flutter pub get
@@ -112,21 +125,27 @@ flutter packages pub run build_runner build
 flutter run
 ```
 
-### プロジェクト構成
+※ `build_runner` でアダプタを自動生成する必要があります。
 
-```
-lib/
-├── main.dart                // エントリーポイント、Hive初期化
-├── estimate.dart            // 見積モデル（Hive用）
-├── estimate_form_page.dart  // 入力フォーム＋リスト表示UI
-├── estimate.g.dart          // Hiveアダプタ（自動生成）
-```
+## 🖥 対応プラットフォーム
 
-### 使用技術
-- Flutter 3.x
-- Hive 2.x（ローカル保存）
-- build_runner / hive_generator（アダプタ生成）
+- Android / iOS
+- Windows / macOS
 
-### 作者
-- 砂川優治
-- 名古屋国際工科専門職大学
+## 📸 スクリーンショット
+
+> ※スクリーンショットをここに挿入（フォームUIとリストUI）
+
+## ✨ 今後の改善案（例）
+
+- [ ] データのエクスポート（CSV/JSON）
+- [ ] Cloud Firestore対応（クラウド保存）
+- [ ] UI改善（バリデーション、テーマ）
+
+---
+
+## 📬 制作者
+
+**砂川優治 / Sunagawa Yuji**  
+- Flutter / Laravel / MQL5 / 教育アプリ開発  
+- [GitHub Portfolio](https://github.com/YujiSK)  
